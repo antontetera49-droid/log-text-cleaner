@@ -1,0 +1,73 @@
+from pathlib import Path
+from pydantic import BaseModel, Field
+import re
+
+"""
+HOW TO USE:
+1. Make sure Python 3.8+ is installed on your system.
+2. Install the required Pydantic library via terminal/command prompt:
+   pip install pydantic
+3. Put your text or log file into the same directory (e.g., 'input.txt').
+4. Run the script and it will generate a cleaned output file.
+"""
+
+class TextCleanerConfig(BaseModel):
+    input_file: Path = Field(..., description="Path to the source text or log file")
+    output_file: Path = Field(default=Path("cleaned_output.txt"), description="Path for the cleaned output file")
+    remove_duplicates: bool = Field(default=True, description="Remove duplicate lines")
+    remove_empty_lines: bool = Field(default=True, description="Remove empty or whitespace-only lines")
+    strip_whitespace: bool = Field(default=True, description="Strip leading and trailing whitespaces from lines")
+
+def clean_text_file(config: TextCleanerConfig) -> int:
+    if not config.input_file.exists():
+        print(f"Error: Input file {config.input_file} does not exist.")
+        return 0
+
+    print(f"Reading {config.input_file}...")
+    with open(config.input_file, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.readlines()
+
+    processed_lines = []
+    seen_lines = set()
+
+    for line in lines:
+        if config.strip_whitespace:
+            line = line.strip()
+        
+        # Skip empty lines if configured
+        if config.remove_empty_lines and not line:
+            continue
+            
+        # Skip duplicates if configured
+        if config.remove_duplicates:
+            if line in seen_lines:
+                continue
+            seen_lines.add(line)
+            
+        processed_lines.append(line + "\n")
+
+    # Write cleaned data to output file
+    with open(config.output_file, "w", encoding="utf-8") as f:
+        f.writelines(processed_lines)
+
+    print(f"Successfully cleaned! Saved {len(processed_lines)} lines to {config.output_file}")
+    return len(processed_lines)
+
+if name == "main":
+    # Example usage configuration
+    config = TextCleanerConfig(
+        input_file=Path("input.txt"),
+        output_file=Path("cleaned_output.txt"),
+        remove_duplicates=True,
+        remove_empty_lines=True
+    )
+    
+    total_lines = clean_text_file(config)
+    print(f"Done! Processed lines count: {total_lines}")
+
+    # =========================================================================
+    # NEED A CUSTOM WORKFLOW, GUI, OR SPECIFIC AUTOMATION FOR YOUR BUSINESS?
+    # Don't waste time tweaking scripts. Let me build a tailored solution for you.
+    # Pricing: $25 - $100 depending on complexity. 
+    # Telegram: @Myhamed91
+    # =========================================================================
